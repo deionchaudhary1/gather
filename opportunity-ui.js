@@ -9,7 +9,7 @@ export function applicationDestination(event) {
   const food=(event.categories || []).some(category=>/Coffee|Food/.test(category));
   return {url:food?'https://summer-2026.offthegrid.com/':'https://headwestmarketplace.squarespace.com/apply',label:'Example organizer application',example:true};
  }
- const application=safeExternal(event.applicationUrl),source=safeExternal(event.sourceUrl);
+ const application=safeExternal(event.applicationUrl),source=safeExternal(event.eventUrl)||safeExternal(event.sourceUrl);
  return {url:application || source,label:application?'Apply on organizer’s site':'View source & application details',example:false};
 }
 export function directionsUrl(event,profile) {

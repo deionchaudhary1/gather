@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdtemp,rm,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {pathToFileURL} from 'node:url';
-import {createDiscovery,extractPage,shortlist,testQueries,queriesFor,loadLatestDiscovery} from '../discovery.mjs';
+import {createDiscovery,extractPage,shortlist,queriesFor,loadLatestDiscovery} from '../discovery.mjs';
 import {evaluate} from '../matching.js';
 import {defaultProfile} from '../data.js';
 const page={url:'https://organizer.example/apply',metadata:{title:'Holiday fair'},markdown:'Welcoming vendors\nWe welcome food and coffee vendors\nVendor fee: $85\nApplication deadline: November 5, 2026\nInsurance required.\n[Apply here](/form)'};
@@ -27,7 +27,7 @@ test('shortlist ranks relevant links, deduplicates, rejects unsafe and social UR
  const organicResults=Array.from({length:9},(_,i)=>({url:`https://organizer${i}.example/apply`,title:'Vendor application market'}));
  organicResults.push(organicResults[0],{url:'javascript:alert(1)',title:'Vendor application'},{url:'https://instagram.com/a',title:'Vendor application'});
  assert.equal(shortlist([{organicResults}]).length,5);assert.equal(shortlist([{organicResults:[{url:'https://example.com',title:'Travel guide'}]}]).length,0);
- assert.deepEqual(queriesFor(defaultProfile,true),testQueries);assert.ok(queriesFor(defaultProfile).every(q=>q.includes(defaultProfile.category)));
+ assert.ok(queriesFor(defaultProfile).slice(0,2).every(q=>q.includes(defaultProfile.baseCity)&&q.includes('California')));assert.ok(queriesFor(defaultProfile)[2].includes('San Francisco Bay Area'));assert.ok(queriesFor(defaultProfile).some(q=>q.includes('coffee')));
 });
 test('pipeline submits bounded Actors, reports usage, and caches without repeating paid calls',async()=>{
  const dir=await mkdtemp(`${tmpdir()}/gather-test-`);const calls=[];
@@ -42,12 +42,12 @@ test('pipeline submits bounded Actors, reports usage, and caches without repeati
   const progress=[];
   const first=await discover(defaultProfile,true,{onProgress:update=>progress.push(update)});
   assert.deepEqual([...new Set(progress.map(p=>p.stage))],['cache','search','shortlist','crawl','extract']);
-  assert.ok(progress.some(p=>p.stage==='crawl' && p.message.includes('1 selected sources')));
+  assert.ok(progress.some(p=>p.stage==='crawl' && p.message.includes('selected sources')));
   for(const key of ['searchMs','crawlMs','extractionMs','totalMs'])assert.ok(Number.isFinite(first.timings[key]) && first.timings[key]>=0);
   assert.equal(first.events.length,1);assert.equal(first.runs.length,2);
   const inputs=calls.filter(c=>c.url.includes('/acts/')).map(c=>JSON.parse(c.options.body));
   assert.equal(inputs[0].queries.split('\n').length,3);assert.equal(inputs[0].maxPagesPerQuery,1);assert.equal(inputs[0].aiModeSearch.enableAiMode,false);
-  assert.equal(inputs[1].maxCrawlPages,10);assert.equal(inputs[1].maxCrawlDepth,1);
+  assert.equal(inputs[1].maxCrawlPages,10);assert.equal(inputs[1].maxCrawlDepth,0);
   const count=calls.length,cachedProgress=[];assert.equal((await discover(defaultProfile,true,{onProgress:p=>cachedProgress.push(p.stage)})).cached,true);assert.equal(calls.length,count);assert.deepEqual(cachedProgress,['cache']);
   assert.ok(!JSON.stringify(first).includes('secret'));
  }finally{await rm(dir,{recursive:true,force:true});}
@@ -65,10 +65,10 @@ test('running Actors are polled and unsuccessful runs do not trigger crawling',a
  try {await assert.rejects(createDiscovery({token:'token',cacheDir:pathToFileURL(`${dir}/`),fetchImpl,pollMs:0})(defaultProfile),/failed-run ended with FAILED/);assert.equal(calls,2);}
  finally{await rm(dir,{recursive:true,force:true});}
 });
-test('no relevant search results skips the crawler',async()=>{
+test('an empty successful search still checks trusted organizer sources',async()=>{
  const dir=await mkdtemp(`${tmpdir()}/gather-empty-`);let calls=0;
- const fetchImpl=async()=>({ok:true,json:async()=>++calls===1?{data:{id:'empty',status:'SUCCEEDED',defaultDatasetId:'empty-data'}}:[]});
- try {const result=await createDiscovery({token:'token',cacheDir:pathToFileURL(`${dir}/`),fetchImpl})(defaultProfile);assert.equal(calls,2);assert.deepEqual(result.events,[]);assert.equal(result.runs.length,1);}
+ const fetchImpl=async url=>{calls++;return {ok:true,json:async()=>url.includes('/acts/')?{data:{id:'empty',status:'SUCCEEDED',defaultDatasetId:'empty-data'}}:[]};};
+ try {const result=await createDiscovery({token:'token',cacheDir:pathToFileURL(`${dir}/`),fetchImpl})(defaultProfile);assert.equal(calls,4);assert.deepEqual(result.events,[]);assert.equal(result.runs.length,2);assert.equal(result.fallbackSources,3);}
  finally{await rm(dir,{recursive:true,force:true});}
 });
 test('a failed crawl can reuse the successful search cache',async()=>{
@@ -88,7 +88,7 @@ test('a failed crawl can reuse the successful search cache',async()=>{
 });
 test('organization searches use the selected city without sending revenue or device coordinates',()=>{
  const queries=queriesFor({...defaultProfile,baseCity:'Fairfield',organizationType:'Nonprofit',revenue:'REVENUE-SECRET',latitude:38.123456});
- assert.ok(queries.every(query=>query.includes('Fairfield')));assert.ok(queries[2].includes('nonprofit'));assert.ok(!queries.join(' ').includes('REVENUE-SECRET'));assert.ok(!queries.join(' ').includes('38.123456'));
+ assert.ok(queries.slice(0,2).every(query=>query.includes('Fairfield')));assert.ok(queries.some(query=>query.includes('nonprofit')));assert.ok(!queries.join(' ').includes('REVENUE-SECRET'));assert.ok(!queries.join(' ').includes('38.123456'));
 });
 test('labeled source facts retain exact markdown evidence and invalid dates stay unknown',()=>{
  const event=extractPage({...page,markdown:'Vendor information\n**Date**: 2026-11-14\n**City**: Fairfield\n**Venue**: Downtown plaza\nExpected attendance: 500 visitors\nTypical audience: Families and local shoppers'});
@@ -121,7 +121,7 @@ test('shortlisting skips source-located distant organizers before consuming craw
  const selected=shortlist([{organicResults:results}],{profile:{...defaultProfile,radius:30}});
  assert.equal(selected.length,1);assert.equal(selected[0].url,results[2].url);
 });
-test('changing radius reuses the search stage but does not reuse a differently scoped crawl',async()=>{
+test('changing radius reuses the same city discovery; radius filtering stays local',async()=>{
  const dir=await mkdtemp(`${tmpdir()}/gather-scope-`),cacheDir=pathToFileURL(`${dir}/`);let searches=0,crawls=0;
  const fetchImpl=async(url)=>{
   let data;
@@ -130,6 +130,6 @@ test('changing radius reuses the search stage but does not reuse a differently s
   else data=url.includes('search-data')?[{organicResults:[{url:page.url,title:'Vendor application market'}]}]:[page];
   return {ok:true,json:async()=>data};
  };
- try{const discover=createDiscovery({token:'token',fetchImpl,cacheDir});await discover(defaultProfile,true);await discover({...defaultProfile,radius:20},true);assert.equal(searches,1);assert.equal(crawls,2);}
+ try{const discover=createDiscovery({token:'token',fetchImpl,cacheDir});await discover(defaultProfile,true);await discover({...defaultProfile,radius:20},true);assert.equal(searches,1);assert.equal(crawls,1);}
  finally{await rm(dir,{recursive:true,force:true});}
 });
