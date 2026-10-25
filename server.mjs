@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 const root = fileURLToPath(new URL('.', import.meta.url));
 const types = {'.html':'text/html','.css':'text/css','.js':'text/javascript'};
-const allowed = new Set(['index.html','styles.css','app.js','matching.js','data.js','locations.js','planning.js','profiles.js','opportunity-facts.js']);
+const allowed = new Set(['index.html','styles.css','app.js','matching.js','data.js','locations.js','planning.js','profiles.js','opportunity-facts.js','onboarding.js','opportunity-ui.js']);
 const port = Number(process.env.PORT || 4173);
 http.createServer(async (req,res) => {
   const pathname = new URL(req.url,'http://localhost').pathname;

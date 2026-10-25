@@ -1,3 +1,5 @@
+import {applicationDestination,directionsUrl,stockPhoto,matchTone} from './opportunity-ui.js';
+import {startOnboarding} from './onboarding.js';
 import {events as samples,defaultProfile} from './data.js';
 import {evaluate,createDraft,sortEvents,today,validDate,applicationStatus,totalFee} from './matching.js';
 import {cities,coordinates,locationLabel,geographicStatus,visibleNearby} from './locations.js';
@@ -37,23 +39,28 @@ function link(value,label){const url=safeLink(value);return url?`<a class="exter
 function selectedEvent(id){return events.find(event=>event.id===id);}
 function planFor(id){if(!record(plans[id]))plans[id]={stage:'Interested',checks:{},notes:'',tasks:[]};const p=plans[id];if(!record(p.checks))p.checks={};if(!Array.isArray(p.tasks))p.tasks=[];return p;}
 function download(text,filename,type='text/plain') {const url=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-function art(event){const shapes={market:'<path d="M40 70h160v62H40z" fill="#f4edce"/><path d="M30 64l30-32h120l30 32z" fill="#477451"/><path d="M44 64v16m30-16v16m30-16v16m30-16v16m30-16v16m30-16v16" stroke="#f4edce" stroke-width="15"/><path d="M54 100h132" stroke="#ae754b" stroke-width="9"/><path d="M70 110v23m100-23v23" stroke="#477451" stroke-width="8"/>',makers:'<path d="M55 131V64a35 35 0 0170 0v67" fill="#bb775a"/><path d="M69 131V68a21 21 0 0142 0v63" fill="#efdec8"/><rect x="144" y="70" width="47" height="60" rx="16" fill="#607451"/><path d="M142 70h50M157 49v22m19-22v22" stroke="#344a38" stroke-width="6"/><circle cx="174" cy="34" r="10" fill="#e9af4e"/>',lights:'<path d="M10 32q110 72 220 0" fill="none" stroke="#69705d" stroke-width="3"/><path d="M30 133l24-61 24 61m28 0l24-61 24 61m28 0l24-61 24 61" fill="#627455"/><path d="M35 48v15m40 0v15m45-10v15m45-20v15m40-30v15" stroke="#f4d586" stroke-width="10"/><rect x="95" y="109" width="54" height="24" fill="#e9c8a6"/>',sun:'<circle cx="120" cy="69" r="34" fill="#bd7c45"/><path d="M120 14v12m0 86v12M64 69h12m88 0h12M80 29l9 10m62 62l9 10m0-82l-9 10m-62 62l-9 10" stroke="#bd7c45" stroke-width="4"/><path d="M20 135q45-65 95 0q45-65 105 0" fill="#899572"/>',design:'<rect x="45" y="25" width="80" height="110" rx="40" fill="#617e80"/><circle cx="157" cy="101" r="34" fill="#edc18e"/><path d="M139 26h45v44h-45z" fill="#f0e9d7"/>',party:'<path d="M20 30q100 50 200 0" fill="none" stroke="#5f7655" stroke-width="3"/><path d="M40 40l10 25 12-19m30 7l11 25 12-23m30-3l12 25 12-29m29-9l12 23 12-29" fill="#b76f55"/><path d="M60 133V83h120v50" fill="#f3dec1"/><circle cx="121" cy="92" r="18" fill="#8f9c69"/>'};return `<svg viewBox="0 0 240 150" aria-hidden="true">${shapes[event.art] || shapes.market}</svg>`}
+function applicationLink(event){
+ const target=applicationDestination(event);
+ return target.url?link(target.url,target.label):'<span class="muted">Application link not published</span>';
+}
 function renderCard(event){
- const match=evaluate(event,profile),isSaved=saved.includes(event.id),stage=plans[event.id]?.stage;
- return `<article class="card"><div class="art ${escape(event.color || 'sage')}">${art(event)}<span class="kind">${escape(event.kind || 'Type unknown')}</span><button class="save" data-save="${escape(event.id)}" aria-label="${isSaved?'Unsave':'Save'} ${escape(event.name)}" aria-pressed="${isSaved}">${isSaved?'♥':'♡'}</button></div><div class="card-body">
- <div class="card-labels"><span class="match ${match.label==='Strong fit'?'':'warn'}">${escape(match.label)}</span><span class="source-badge">${event.live?'Public source':'Vendor application'}</span></div>
- <h3>${escape(event.name)}</h3><div class="meta">${date(event.date)} · ${escape(event.city || 'Location unknown')}</div><div class="meta distance">${match.distance===null?'Distance unknown':`≈ ${match.distance.toFixed(1)} mi straight-line${event.locationQuality==='title'?' · city inferred':''}`}</div>
- <p>${escape(event.description)}</p>${match.interests.length?`<p class="interest-note">Shared interests: ${escape(match.interests.slice(0,3).join(', '))}</p>`:''}
- <div class="deadline-note">${escape(match.status==='Past'?'Event has ended':match.status==='Closed'?'Applications closed':event.deadline?`Apply by ${date(event.deadline)}`:'Application deadline unknown')}</div>
+ const match=evaluate(event,profile),isSaved=saved.includes(event.id),stage=plans[event.id]?.stage,photo=stockPhoto(event);
+ return `<article class="card"><div class="art ${escape(event.color || 'sage')}"><img src="${escape(photo.url)}" alt="${escape(photo.alt)}" loading="lazy" decoding="async" referrerpolicy="no-referrer"><span class="kind">${escape(event.kind || 'Opportunity')}</span><button class="save" data-save="${escape(event.id)}" aria-label="${isSaved?'Unsave':'Save'} ${escape(event.name)}" aria-pressed="${isSaved}">${isSaved?'♥':'♡'}</button><a class="photo-credit" href="${escape(photo.source)}" target="_blank" rel="noopener noreferrer">${escape(photo.credit)} / Unsplash · illustrative</a></div><div class="card-body">
+ <div class="card-labels"><span class="match match-${matchTone(match)}">${match.label==='Strong fit'?'✦ ':match.blocked?'! ':'◒ '}${escape(match.label)}</span><span class="card-score">${match.score}<small>/100 fit</small></span></div>
+ <h3>${escape(event.name)}</h3><div class="meta">${date(event.date)} · ${escape(event.city || 'Location unknown')}</div>
+ <p class="card-description">${escape(event.description)}</p>
+ <div class="deadline-note">${escape(match.status==='Past'?'Event has ended':match.status==='Closed'?'Applications closed':event.deadline?`Apply by ${date(event.deadline)}`:'Deadline not published')}</div>
  ${stage?`<span class="stage-badge">${escape(stage)} · tracked by you</span>`:''}
- <div class="card-bottom"><span class="fee">${match.fee===null?'Fee unknown':money(match.fee)}<small>${match.fee===null?'confirm fees and rental':event.live&&!event.feeIncludesSpace?'published fee · confirm rental':'including space'}</small></span><button class="details" data-detail="${escape(event.id)}">Explore event ↗</button></div></div></article>`;
+ <div class="card-bottom"><span class="fee">${match.fee===null?'Fee to confirm':money(match.fee)}<small>${match.fee===null?'ask the organizer':event.live&&!event.feeIncludesSpace?'confirm additional charges':'including space'}</small></span><button class="details" data-detail="${escape(event.id)}">Why it fits ↗</button></div>
+ <div class="card-application">${applicationLink(event)}${event.sample?'<small>Demo scenario · real example form</small>':''}</div>
+ </div></article>`;
 }
 function render(){
  $('#business-name').textContent=profile.name;
  $('.brief').hidden=view==='compare';
  $('#live-controls').hidden=view==='compare';
  $('#compare-profiles').textContent=view==='compare'?'Back to opportunities ↗':'Compare all three ↗';
- $('#profile-switch').innerHTML=Object.entries(profiles).map(([id,item])=>`<option value="${escape(id)}" ${id===profileId?'selected':''}>${escape(item.name)}${id==='previous'?' (previous profile)':''}</option>`).join('');
+ $('#profile-switch').innerHTML=Object.entries(profiles).map(([id,item])=>`<option value="${escape(id)}" ${id===profileId?'selected':''}>${escape(item.name || 'Profile setup pending')}${id==='previous'?' (previous profile)':''}</option>`).join('');
  $('.avatar').textContent=profile.name?.charAt(0).toUpperCase() || 'G';
  $('#brief-summary').textContent=`${profile.organizationType} · ${profile.category} · Within ${profile.radius} miles of ${locationLabel(profile)} · Budget ${money(Number(profile.budget))}`;
  $('#saved-count').textContent=saved.length;$('#draft-count').textContent=Object.keys(drafts).length;
@@ -64,9 +71,9 @@ function render(){
  $('#discovery-panel').hidden=!['discover','compare'].includes(view);$('.browse-controls').hidden=view==='compare'||view==='drafts'||view==='saved'&&layout==='calendar';$('.results-header').hidden=view==='drafts';$('#saved-controls').hidden=view!=='saved';
  $('#event-source').value=source;$('#radius-filter').value=String(profile.radius);
  if(!$('#radius-filter').value){const opt=new Option(`${profile.radius} miles`,String(profile.radius));$('#radius-filter').add(opt);$('#radius-filter').value=String(profile.radius);}
- $('.demo-pill').textContent=['discover','compare'].includes(view)?(source==='live'?'Public listings · review details':'Vendor applications'):'Your local workspace';
- $('#source-summary').textContent=source==='live'?`${liveEvents.length} public listings available`:`${samples.length} applications in your local catalog`;
- $('.transparency').textContent=view==='compare'?'Based on listed requirements and local rules. Expand Evidence & checks to verify conditions and missing facts; scores do not override exclusions.':view==='drafts'?'Local templates. Nothing is sent to organizers.':view==='saved'&&layout==='calendar'?'The calendar shows all saved events and deadlines. List filters do not apply.':'Local compatibility uses category, organization type, distance, fee, and shared interests. Distances use city centers unless coordinates are published. Only located nearby listings are shown by default. Include unverified locations to inspect uncertain geography. Confirm all public listing details.';
+ $('.topbar .demo-pill').textContent=['discover','compare'].includes(view)?(source==='live'?'Web-discovered opportunities':'Demo opportunities'):'Your local workspace';
+ $('#source-summary').textContent=source==='live'?`${liveEvents.length} opportunities found online`:`${samples.length} demo opportunities · illustrative data`;
+ $('.transparency').textContent=view==='compare'?'Based on listed requirements and local rules. Expand Evidence & checks to verify conditions and missing facts; scores do not override exclusions.':view==='drafts'?'Local templates. Nothing is sent to organizers.':view==='saved'&&layout==='calendar'?'The calendar shows all saved events and deadlines. List filters do not apply.':'Best fit first, then soonest event. Compatibility considers your offering, budget, search area, and audience. Open an opportunity to see why it fits.';
  $('#comparison-panel').hidden=view!=='compare';$('#geography-summary').hidden=view!=='discover';
  $('#results').hidden=view==='compare'||view==='saved'&&layout==='calendar';$('#calendar-panel').hidden=!(view==='saved'&&layout==='calendar');
  if(view==='drafts'){
@@ -75,20 +82,24 @@ function render(){
  const base=view==='saved'?events.filter(e=>saved.includes(e.id)):events.filter(e=>source==='live'?e.live:!e.live);
  const query=$('#search').value.toLowerCase().trim();
  if(view==='compare'){renderComparison(base);return;}
- if(view==='discover'){const outside=base.filter(e=>geographicStatus(e,profile)==='outside').length,unknown=base.filter(e=>geographicStatus(e,profile)==='unknown').length;$('#geography-summary').textContent=`${outside} outside your radius · ${unknown} with unverified locations. Comparison includes every listing so you can inspect exclusions.`;}
+ if(view==='discover'){const outside=base.filter(e=>geographicStatus(e,profile)==='outside').length,unknown=base.filter(e=>geographicStatus(e,profile)==='unknown').length;$('#geography-summary').textContent=`${outside} outside your search area · ${unknown} locations to confirm. Search area uses geographic proximity; check Google Maps for driving distance.`;}
  const list=sortEvents(base.filter(e=>(type==='All'||e.kind===type)&&(view==='saved'||visibleNearby(e,profile,$('#include-unknown-location').checked))&&(!$('#fits-only').checked||evaluate(e,profile).eligible)&&(!$('#hide-ended').checked||!['Past','Closed'].includes(applicationStatus(e)))&&`${e.name} ${e.city || ''} ${e.audience || ''} ${e.interests || ''} ${e.description || ''}`.toLowerCase().includes(query)),profile,$('#sort-order').value);
  $('#results-heading').textContent=`${view==='saved'?'Saved opportunities':'Opportunities for you'} (${view==='saved'&&layout==='calendar'?base.length:list.length})`;
  if(view==='saved'&&layout==='calendar'){renderCalendar(base);return;}
- $('#results').innerHTML=list.length?list.map(renderCard).join(''):empty(view==='saved'&&!base.length?'Your shortlist starts here.':'No opportunities in this view.',view==='saved'&&!base.length?'Save an event using its heart button, then return here.':source==='live'&&!liveEvents.length?'Find public listings above, or explore the vendor application catalog.':'Clear your filters, widen your radius, or include unverified locations.');
+ $('#results').innerHTML=view==='discover'&&source==='live'&&!liveEvents.length?webEmptyState():list.length?list.map(renderCard).join(''):empty(view==='saved'&&!base.length?'Your shortlist starts here.':'No opportunities in this view.',view==='saved'&&!base.length?'Save an event using its heart button, then return here.':source==='live'&&!liveEvents.length?'Find public listings above, or explore the vendor application catalog.':'Clear your filters, widen your radius, or include unverified locations.');
+}
+function webEmptyState(){
+ $('#live-controls').open=true;
+ return `<div class="empty web-empty"><span class="little-star" aria-hidden="true">⌕</span><h2>Find opportunities beyond the demo</h2><p>These are real pages discovered online with Apify. No web opportunities are saved in this browser yet. Searching uses your Apify credits and can take a few minutes.</p><button class="primary" id="start-web-search" ${searching?'disabled':''}>${searching?'Searching the web…':'Find opportunities online ↗'}</button><button class="text-button" id="show-demo">Explore demo opportunities</button><p class="muted">No automatic paid searches. Results are reused for 24 hours.</p></div>`;
 }
 function empty(title,text){return `<div class="empty"><h2>${escape(title)}</h2><p>${escape(text)}</p><button class="secondary" id="reset-filters">${view==='saved'&&!saved.length?'Discover events':'Clear filters'}</button></div>`;}
 function renderComparison(list){
  const businesses=approvedProfiles.map(({id})=>({id,...profiles[id]}));
  $('#results-heading').textContent=`Business compatibility (${list.length} listings)`;
- $('#comparison-panel').innerHTML=list.length?`<p class="comparison-note">All ${source==='live'?'public':'catalog'} listings are included, even when distant or closed. Favorites are shared; application drafts and checklists belong to the selected business. Distances are approximate city-center miles. Scores count supported criteria, not chances of acceptance.</p><div class="comparison-scroll" tabindex="0" aria-label="Scroll business comparison"><table class="comparison-table"><caption>Offering, travel radius, fee budget, and listed requirements</caption><thead><tr><th scope="col">Opportunity</th>${businesses.map(b=>`<th scope="col">${escape(b.name)}<small>${escape(b.category)}<br>${escape(b.baseCity)} · ${b.radius} mi · ${money(Number(b.budget))}</small></th>`).join('')}</tr></thead><tbody>${list.map(event=>`<tr><th scope="row"><button class="comparison-event" data-detail="${escape(event.id)}">${escape(event.name)} ↗</button><p>${escape(event.city || 'Location not verified')}${event.locationQuality==='title'?' · inferred from title':''}</p>${link(event.sourceUrl,'Source')}</th>${businesses.map(b=>{
+ $('#comparison-panel').innerHTML=list.length?`<p class="comparison-note">All ${source==='live'?'public':'catalog'} listings are included, even when distant or closed. Favorites are shared; application drafts and checklists belong to the selected business. Search areas use geographic proximity. Open an event for Google Maps driving directions. Scores count supported criteria, not chances of acceptance.</p><div class="comparison-scroll" tabindex="0" aria-label="Scroll business comparison"><table class="comparison-table"><caption>Offering, search area, fee budget, and listed requirements</caption><thead><tr><th scope="col">Opportunity</th>${businesses.map(b=>`<th scope="col">${escape(b.name)}<small>${escape(b.category)}<br>${escape(b.baseCity)} · ${b.radius} mi · ${money(Number(b.budget))}</small></th>`).join('')}</tr></thead><tbody>${list.map(event=>`<tr><th scope="row"><button class="comparison-event" data-detail="${escape(event.id)}">${escape(event.name)} ↗</button><p>${escape(event.city || 'Location not verified')}${event.locationQuality==='title'?' · inferred from title':''}</p>${link(event.sourceUrl,'Source')}</th>${businesses.map(b=>{
  const match=evaluate(event,b),category={accepted:'Listed as accepted',excluded:'Explicitly excluded',conditional:'Conditions apply',unknown:'Unconfirmed'}[match.categoryState];
  const quotes=[...(event.categoryEvidence?.accepted?.[b.category] || []),...(event.categoryEvidence?.excluded?.[b.category] || []),...(event.categoryEvidence?.conditional?.[b.category] || [])];
- return `<td><strong class="comparison-verdict ${match.blocked?'is-blocked':''}">${escape(match.label)}</strong><small class="criteria-score">${match.score}/100 supported criteria</small><dl><dt>Offering</dt><dd>${category}</dd><dt>Travel</dt><dd>${match.distance===null?'Unknown':`≈ ${match.distance.toFixed(1)} mi · ${match.geography==='outside'?'outside radius':match.geography==='unknown'?'location unverified':'within radius'}`}</dd><dt>Published fee</dt><dd>${money(match.fee)}${match.fee!==null&&match.fee>Number(b.budget)?' · over budget':''}</dd><dt>Applications</dt><dd>${escape(match.status)}</dd></dl><details><summary>Evidence & checks</summary><ul>${match.issues.map(issue=>`<li>${escape(issue)}</li>`).join('')||'<li>All matching criteria have supporting information.</li>'}</ul>${quotes.map(quote=>`<blockquote>${escape(quote)}</blockquote>`).join('')}${event.locationEvidence?`<p class="muted">Location evidence: ${escape(event.locationEvidence)}</p>`:''}</details><button class="text-button" data-view-business="${escape(b.id)}" data-compare-event="${escape(event.id)}">View as this business ↗</button></td>`;
+ return `<td><strong class="comparison-verdict ${match.blocked?'is-blocked':''}">${escape(match.label)}</strong><small class="criteria-score">${match.score}/100 supported criteria</small><dl><dt>Offering</dt><dd>${category}</dd><dt>Search area</dt><dd>${match.geography==='outside'?'Outside search area':match.geography==='unknown'?'Location to confirm':'Within search area'}</dd><dt>Published fee</dt><dd>${money(match.fee)}${match.fee!==null&&match.fee>Number(b.budget)?' · over budget':''}</dd><dt>Applications</dt><dd>${escape(match.status)}</dd></dl><details><summary>Evidence & checks</summary><ul>${match.issues.map(issue=>`<li>${escape(issue)}</li>`).join('')||'<li>All matching criteria have supporting information.</li>'}</ul>${quotes.map(quote=>`<blockquote>${escape(quote)}</blockquote>`).join('')}${event.locationEvidence?`<p class="muted">Location evidence: ${escape(event.locationEvidence)}</p>`:''}</details><button class="text-button" data-view-business="${escape(b.id)}" data-compare-event="${escape(event.id)}">View as this business ↗</button></td>`;
  }).join('')}</tr>`).join('')}</tbody></table></div>`:empty('No listings to compare.','Choose vendor applications or load public listings to compare the three businesses.');
 }
 function renderCalendar(list){
@@ -100,7 +111,9 @@ function renderCalendar(list){
  $('#calendar-content').innerHTML=`<table class="calendar-table"><caption>${new Date(`${month}-01T12:00:00`).toLocaleDateString('en-US',{month:'long',year:'numeric'})}</caption><thead><tr>${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<th scope="col">${d}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>`;
  const undated=list.filter(e=>!validDate(e.date));$('#undated-events').innerHTML=undated.length?`<h3>Event date not published (${undated.length})</h3><p class="muted">Any known application deadlines still appear above.</p>${undated.map(e=>`<button class="secondary" data-detail="${escape(e.id)}">${escape(e.name)}</button>`).join(' ')}`:'';
 }
-function openProfile(){
+function openProfile(setup=false){
+ $('#profile-title').textContent=setup ? 'Tell us about your business' : 'Your organization profile';
+ $('#profile-form button[type="submit"]').textContent=setup ? 'Find my next crowd →' : 'Save profile & refresh matches ↗';
  const form=$('#profile-form');Object.entries(profile).forEach(([key,value])=>{if(form.elements[key])form.elements[key].value=value ?? '';});
  profileLocationDraft={locationMode:profile.locationMode,latitude:profile.latitude,longitude:profile.longitude};showLocationStatus();$('#profile-dialog').showModal();
 }
@@ -108,25 +121,23 @@ function showLocationStatus(message){$('#location-status').textContent=message |
 function openDetail(id,navigate=true){
  const event=selectedEvent(id);if(!event)return;
  activeId=id;activePanel='event';const match=evaluate(event,profile),plan=planFor(id),closed=['Closed','Past'].includes(match.status);
- const tasks=[...checklistFor(event),...plan.tasks];
- const checked=tasks.filter(t=>plan.checks[t.id]).length;
- const fees=Number.isFinite(event.vendorFee)||Number.isFinite(event.spaceFee)?`<dl class="fee-breakdown"><div><dt>Vendor / participation fee</dt><dd>${money(event.vendorFee)}</dd></div><div><dt>Space rental</dt><dd>${money(event.spaceFee)}</dd></div><div><dt>Total published fees</dt><dd>${money(totalFee(event))}</dd></div></dl>`:`<p>Published fee: ${money(totalFee(event))}. Space rental: ${event.feeIncludesSpace?'included':'not confirmed'}.</p>`;
+ const tasks=[...checklistFor(event),...plan.tasks],checked=tasks.filter(t=>plan.checks[t.id]).length;
+ const fees=Number.isFinite(event.vendorFee)||Number.isFinite(event.spaceFee)?`<dl class="fee-breakdown"><div><dt>Participation fee</dt><dd>${money(event.vendorFee)}</dd></div><div><dt>Space rental</dt><dd>${money(event.spaceFee)}</dd></div><div><dt>Total published</dt><dd>${money(totalFee(event))}</dd></div></dl>`:`<p>Full fees: ${money(totalFee(event))}. Confirm space rental and additional charges.</p>`;
  $('#detail-content').innerHTML=`
- <div class="dialog-head"><div><span class="eyebrow">${escape(event.kind || 'EVENT')} · ${escape(event.city || 'LOCATION UNKNOWN')}</span><h2 id="event-title">${escape(event.name)}</h2></div><button class="icon-button close" aria-label="Close event">×</button></div>
- <div class="sample-note">${event.live?`Public listing retrieved ${escape(date(event.retrievedAt?.slice(0,10)))}. Verify requirements and current availability. ${link(event.sourceUrl,'Read source')}`:'Vendor application · prepare materials and track your progress in this workspace.'}</div>
+ <div class="dialog-head event-heading"><div><span class="eyebrow">${escape(event.kind || 'OPPORTUNITY')} · ${escape(event.city || 'LOCATION TO CONFIRM')}</span><h2 id="event-title">${escape(event.name)}</h2><div class="event-application">${applicationLink(event)}</div></div><button class="icon-button close" aria-label="Close event">×</button></div>
+ ${event.sample?'<p class="scenario-note">Demo scenario. The link above is a real example organizer application, not an application for this fictional event.</p>':`<p class="scenario-note">Checked ${escape(date(event.retrievedAt?.slice(0,10)))} · ${link(event.sourceUrl,'Original source')}. Confirm availability with the organizer.</p>`}
+ <section class="compatibility-hero" aria-label="Compatibility with your business"><div class="compatibility-heading"><div><span class="eyebrow">WHY THIS OPPORTUNITY FITS YOU</span><h3>A place for ${escape(profile.name)}?</h3><span class="match match-${matchTone(match)}">${match.label==='Strong fit'?'✦ ':''}${escape(match.label)}</span></div><div class="fit-ring" style="--fit:${match.score}%" aria-label="Compatibility ${match.score} out of 100"><span>${match.score}<small>/100</small></span></div></div><ul class="fit-reasons">${match.reasons.map(r=>`<li><span aria-hidden="true">✓</span>${escape(r)}</li>`).join('')||'<li>Not enough source information to confirm a fit yet.</li>'}</ul>${match.issues.length?`<div class="fit-cautions"><strong>Before you apply</strong><ul>${match.issues.map(r=>`<li>${escape(r)}</li>`).join('')}</ul></div>`:''}<details class="score-method"><summary>How this score works</summary><p>35 offering · 25 search area · 20 published fees · 10 organization eligibility · 10 shared interests. This is a transparent rules-based compatibility score, not an AI prediction or acceptance probability. Unknown facts need confirmation. Search area is geographic proximity, not driving mileage.</p></details></section>
  <p class="detail-description">${escape(event.description)}</p>
- <div class="facts"><div><small>Event date</small>${date(event.date)}${event.endDate&&event.endDate!==event.date?` – ${date(event.endDate)}`:''}</div><div><small>Application deadline</small>${date(event.deadline)}<span class="fact-status">${escape(match.status)}</span></div><div><small>Location</small>${escape(event.venue || event.address || event.city || 'Not published')}<span class="fact-status">${match.distance===null?'Distance unknown':`≈ ${match.distance.toFixed(1)} miles straight-line${event.locationQuality==='title'?' · confirm city':''}`}</span></div><div><small>Expected attendance</small>${escape(event.audienceSize || 'Not published')}</div></div>
- <section class="detail-section"><h3>Audience & opportunity</h3><p>${escape(event.audience || 'Typical audience not published. Ask the organizer.')}</p><p class="muted">${escape(event.needs)}</p></section>
- <section class="detail-section"><h3>Vendor fees & space rental</h3>${fees}<p class="muted">${event.live?'Confirm deposits, utilities, taxes, and additional charges with the organizer.':'Participation and space rental are shown separately when available.'}</p></section>
- <section class="detail-section"><h3>Compatibility with your organization</h3><p class="compatibility-score">${match.score}/100 <small>local criteria score · not a probability of acceptance</small></p><p class="muted">35 category · 25 distance · 20 fee · 10 organization type · 10 shared interests. ${escape(match.label)}.</p><ul>${match.reasons.map(r=>`<li>${escape(r)}</li>`).join('')||'<li>No confirmed matching criteria.</li>'}</ul>${match.issues.length?`<h3>Confirm before committing</h3><ul>${match.issues.map(r=>`<li>${escape(r)}</li>`).join('')}</ul>`:''}</section>
- <section class="detail-section"><h3>How to apply</h3><p class="status-notice">${closed?'This listing is closed or past. Keep your notes, but confirm a future opportunity before applying.':event.live?'Applications are completed with the organizer. Gather helps you prepare your materials.':'Review the vendor requirements and prepare your application materials below.'}</p><ol>${(event.applicationSteps?.length?event.applicationSteps:['Read the organizer’s source page and confirm eligibility, fees, and the application deadline.','Prepare your organization description and any required supporting documents.','Use the organizer’s application form and keep your confirmation.']).map(step=>`<li>${escape(step)}</li>`).join('')}</ol>${!closed?link(event.applicationUrl,'Open organizer application') || link(event.sourceUrl,'Find application details at source'):''}<h3>Requirements</h3><ul>${event.requirements.length?event.requirements.map(r=>`<li>${escape(r)}</li>`).join(''):'<li>Requirements not published. Confirm with the organizer.</li>'}</ul><div class="detail-actions"><button class="primary" data-packet="${escape(id)}">Prepare application materials</button><button class="secondary" data-draft="${escape(id)}" ${closed?'disabled':''}>Prepare inquiry</button></div><p class="muted">No application is submitted and no message is sent from Gather.</p></section>
- <section class="detail-section"><h3>Your application progress</h3><label class="field-label">Status <select id="application-stage">${applicationStages.map(s=>`<option ${plan.stage===s?'selected':''}>${s}</option>`).join('')}</select></label><p class="muted">Tracked by you, not confirmed by the organizer.</p><label class="field-label" for="application-notes">Preparation notes</label><textarea id="application-notes" rows="3" maxlength="4000">${escape(plan.notes)}</textarea><p class="muted" id="notes-status" role="status">Notes save automatically in this browser.</p></section>
- <section class="detail-section"><h3>Bring & do checklist</h3><p class="muted" id="checklist-progress">${checked} of ${tasks.length} completed. General planning suggestions are separate from organizer requirements.</p><div class="task-list">${tasks.map(task=>`<div class="task-row"><label class="task"><input type="checkbox" data-task="${escape(task.id)}" ${plan.checks[task.id]?'checked':''}><span>${escape(task.text)}<small>${task.source?'From listing':task.custom?'Your task':'Planning suggestion'}</small></span></label>${task.custom?`<button class="text-button" data-remove-task="${escape(task.id)}" aria-label="Remove ${escape(task.text)}">Remove</button>`:''}</div>`).join('')}</div><form id="add-task-form" class="add-task"><label for="new-task">Add your own task</label><div><input id="new-task" maxlength="200" required><button class="secondary" type="submit">Add task</button></div></form></section>
- ${event.live?`<details class="detail-section"><summary>Supporting source text</summary>${Object.entries(event.evidence).map(([key,text])=>`<p><strong>${escape(key)}:</strong> ${escape(text)}</p>`).join('')||'<p>No supported structured fields found. Read the source.</p>'}</details>`:''}
- <div class="detail-actions"><button class="secondary" data-save="${escape(id)}">${saved.includes(id)?'Remove from saved':'Save opportunity'}</button><button class="text-button" data-copy-link="${escape(id)}">Copy event link</button></div>`;
- $('#application-stage').onchange=e=>{plan.stage=e.target.value;persist();render();toast('Application status updated');};
+ <div class="facts event-facts"><div><small>Event date</small>${date(event.date)}${event.endDate&&event.endDate!==event.date?` – ${date(event.endDate)}`:''}</div><div><small>Apply by</small>${date(event.deadline)}<span class="fact-status">${escape(match.status)}</span></div><div><small>Published fee</small>${money(totalFee(event))}<span class="fact-status">${totalFee(event)===null?'Confirm with organizer':'Confirm additional charges'}</span></div><div><small>Location & travel</small>${escape(event.venue || event.address || event.city || 'Not published')}${directionsUrl(event,profile)?`<div>${link(directionsUrl(event,profile),'Driving directions on Google Maps')}</div><span class="fact-status">${event.sample?'Demo route to city center; exact venue is fictional.':'Check route, driving distance, and travel time in Maps.'}</span>`:'<span class="fact-status">Confirm the location before planning travel.</span>'}</div></div>
+ <details class="detail-section compact-detail"><summary>Audience & event details</summary><p>${escape(event.audience || 'Audience not published.')}${event.audienceSize?` · ${escape(event.audienceSize)}`:''}</p><p>${escape(event.needs)}</p>${fees}</details>
+ <details class="detail-section next-steps"><summary>Next steps <span>${checked}/${tasks.length} done</span></summary><p class="muted" id="checklist-progress">${checked} of ${tasks.length} completed. Suggestions to help you prepare; confirm requirements with the organizer.</p><div class="task-list">${tasks.map(task=>`<div class="task-row"><label class="task"><input type="checkbox" data-task="${escape(task.id)}" ${plan.checks[task.id]?'checked':''}><span>${escape(task.text)}<small>${task.source?'From listing':task.custom?'Your task':'Planning suggestion'}</small></span></label>${task.custom?`<button class="text-button" data-remove-task="${escape(task.id)}" aria-label="Remove ${escape(task.text)}">Remove</button>`:''}</div>`).join('')}</div><form id="add-task-form" class="add-task"><label for="new-task">Add your own step</label><div><input id="new-task" maxlength="200" required><button class="secondary" type="submit">Add step</button></div></form></details>
+ <details class="detail-section compact-detail"><summary>Application requirements & materials</summary><p>${closed?'This listing is closed or past. Check for a future opportunity before applying.':'Apply directly through the organizer’s own form. Gather helps you prepare.'}</p><ul>${(event.requirements || []).map(r=>`<li>${escape(r)}</li>`).join('')||'<li>Confirm requirements with the organizer.</li>'}</ul><ol>${(event.applicationSteps || []).map(step=>`<li>${escape(step)}</li>`).join('')}</ol><div class="detail-actions"><button class="secondary" data-packet="${escape(id)}">Prepare application materials</button><button class="text-button" data-draft="${escape(id)}" ${closed?'disabled':''}>Prepare inquiry</button></div></details>
+ <details class="detail-section compact-detail"><summary>Your progress & notes <span>${escape(plan.stage)}</span></summary><label class="field-label">Status <select id="application-stage">${applicationStages.map(s=>`<option ${plan.stage===s?'selected':''}>${s}</option>`).join('')}</select></label><label class="field-label" for="application-notes">Preparation notes</label><textarea id="application-notes" rows="3" maxlength="4000">${escape(plan.notes)}</textarea><p class="muted" id="notes-status" role="status">Notes save in this browser. Status is tracked by you.</p></details>
+ ${event.live?`<details class="detail-section compact-detail"><summary>Source evidence</summary>${Object.entries(event.evidence || {}).map(([key,text])=>`<p><strong>${escape(key)}:</strong> ${escape(text)}</p>`).join('')||'<p>Read the original source for details.</p>'}</details>`:''}
+ <div class="detail-actions event-bottom-actions"><button class="primary" data-save="${escape(id)}">${saved.includes(id)?'Remove from saved':'♡ Save opportunity'}</button><button class="text-button" data-copy-link="${escape(id)}">Copy event link</button></div>`;
+ $('#application-stage').onchange=e=>{plan.stage=e.target.value;persist();render();e.target.closest('details').querySelector('summary span').textContent=plan.stage;toast('Application status updated');};
  $('#application-notes').oninput=e=>{plan.notes=e.target.value;persist();$('#notes-status').textContent='Notes saved in this browser.';};
- $('#add-task-form').onsubmit=e=>{e.preventDefault();const text=$('#new-task').value.trim();if(!text)return;plan.tasks.push({id:`custom-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,text,custom:true});persist();openDetail(id,false);};
+ $('#add-task-form').onsubmit=e=>{e.preventDefault();const text=$('#new-task').value.trim();if(!text)return;plan.tasks.push({id:`custom-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,text,custom:true});persist();openDetail(id,false);$('.next-steps').open=true;};
  if(!$('#detail-dialog').open)$('#detail-dialog').showModal();
  if(navigate&&location.hash!==`#event/${encodeURIComponent(id)}`)history.pushState(null,'',`#event/${encodeURIComponent(id)}`);
 }
@@ -164,17 +175,21 @@ document.addEventListener('click',async event=>{
  if(button.dataset.packet)openPacket(button.dataset.packet);
  if(button.dataset.delete){delete drafts[button.dataset.delete];persist();render();toast('Draft deleted');}
  if(button.dataset.copyLink){try{await navigator.clipboard.writeText(`${location.origin}/#event/${encodeURIComponent(button.dataset.copyLink)}`);toast('Event link copied. Live listings must be available in this local workspace.');}catch{toast('Copy the event URL from your browser’s address bar.');}}
+ if(button.id==='start-web-search')$('#discover-live').click();
+ if(button.id==='show-demo'){source='samples';persist();render();}
  if(button.id==='reset-filters'){if(view==='saved'&&!saved.length)navigate('discover');else{clearFilters();render();}}
 });
 document.addEventListener('change',event=>{
  if(!event.target.dataset.task||!activeId)return;
  planFor(activeId).checks[event.target.dataset.task]=event.target.checked;persist();
  const tasks=[...checklistFor(selectedEvent(activeId)),...planFor(activeId).tasks];
- $('#checklist-progress').textContent=`${tasks.filter(t=>planFor(activeId).checks[t.id]).length} of ${tasks.length} completed. General planning suggestions are separate from organizer requirements.`;
+ const checked=tasks.filter(t=>planFor(activeId).checks[t.id]).length;
+ $('#checklist-progress').textContent=`${checked} of ${tasks.length} completed. Confirm requirements with the organizer.`;
+ $('.next-steps summary span').textContent=`${checked}/${tasks.length} done`;
 });
 $('#compare-profiles').onclick=()=>navigate(view==='compare'?'discover':'compare');
 $('#profile-switch').onchange=event=>{persist();profileId=event.target.value;profile=profiles[profileId];drafts=draftWorkspaces[profileId] ||= {};plans=planWorkspaces[profileId] ||= {};persist();render();toast(`Now viewing ${profile.name}`);};
-$('#profile-button').onclick=openProfile;$('#edit-brief').onclick=openProfile;
+$('#profile-button').onclick=()=>openProfile();$('#edit-brief').onclick=()=>openProfile();
 for(const selector of ['#search','#sort-order','#fits-only','#hide-ended','#include-unknown-location'])$(selector).addEventListener(selector==='#search'?'input':'change',render);
 $('#radius-filter').onchange=e=>{profile.radius=Number(e.target.value);persist();render();};
 $('#event-source').onchange=e=>{source=e.target.value;clearFilters();$('#hide-ended').checked=true;persist();render();};
@@ -191,28 +206,32 @@ $('#profile-form').onsubmit=event=>{
  if(!values.name.trim()||!values.description.trim()){toast('Add your organization name and description.');return;}
  profile={...values,...profileLocationDraft,name:values.name.trim(),description:values.description.trim(),radius:Number(values.radius),budget:Number(values.budget)};
  if(profile.locationMode!=='device'){delete profile.latitude;delete profile.longitude;}else if(!coordinates(profile)){toast('Choose a valid city or retry your location.');return;}
- persist();$('#profile-dialog').close();render();toast('Organization profile updated');
+ persist();render();
+ $('#profile-dialog').close();
+ try{onboarding.completeProfile();}catch(error){toast(error.message);return;}
+ toast('Organization profile updated');
 };
 $('#calendar-month').value=month;$('#calendar-month').onchange=e=>{if(!validDate(`${e.target.value}-01`))return;month=e.target.value;monthChosen=true;render();};
 function changeMonth(delta){const value=new Date(`${month}-01T12:00:00`);value.setMonth(value.getMonth()+delta);if(value.getFullYear()<2000||value.getFullYear()>2100)return;month=`${value.getFullYear()}-${String(value.getMonth()+1).padStart(2,'0')}`;monthChosen=true;render();}
 $('#previous-month').onclick=()=>changeMonth(-1);$('#next-month').onclick=()=>changeMonth(1);
 $('#export-calendar').onclick=()=>{const result=calendarExport(events.filter(e=>saved.includes(e.id)));if(!result.count){toast('Save an event with a published date or deadline before exporting.');return;}download(result.text,'gather-saved-events.ics','text/calendar;charset=utf-8');toast(`Exported ${result.count} event dates and deadlines. Unknown dates were skipped.`);};
 $('#detail-dialog').addEventListener('close',()=>{activeId=null;if(location.hash.startsWith('#event/'))history.replaceState(null,'',location.pathname+location.search);});
-function openRoute(){if(location.hash.startsWith('#event/')){try{const id=decodeURIComponent(location.hash.slice(7));if(selectedEvent(id))openDetail(id,false);else toast('This event is not in this workspace. Load its source listings first.');}catch{toast('Invalid event link');}}else if($('#detail-dialog').open)$('#detail-dialog').close();}
+function openRoute(){if($('#workspace').hidden)return;if(location.hash.startsWith('#event/')){try{const id=decodeURIComponent(location.hash.slice(7));if(selectedEvent(id))openDetail(id,false);else toast('This event is not in this workspace. Load its source listings first.');}catch{toast('Invalid event link');}}else if($('#detail-dialog').open)$('#detail-dialog').close();}
 window.addEventListener('hashchange',openRoute);window.addEventListener('popstate',openRoute);
 function showLive(result,switchSource=false){
  liveResult=result;
  const retained=liveEvents.filter(e=>saved.includes(e.id)||Object.values(draftWorkspaces).some(workspace=>workspace[e.id])||Object.values(planWorkspaces).some(workspace=>workspace[e.id]));
  liveEvents=[...new Map([...retained,...result.events.map(normalizeEvent).filter(Boolean)].map(e=>[e.id,e])).values()];events=[...samples,...liveEvents];
  if(switchSource){source='live';$('#fits-only').checked=false;}
- $('#discovery-status').textContent=`${result.cached?'Cached':'Fresh'} · ${result.events.length} listings from ${result.pagesRead} pages · ${date(result.retrievedAt?.slice(0,10))}. Confirm missing details.`;
+ $('#discovery-status').textContent=`${result.cached?'Last search (cached)':'Just checked'} · ${result.events.length} listings from ${result.pagesRead} pages · ${date(result.retrievedAt?.slice(0,10))}. Confirm missing details.`;
  $('#discovery-runs').innerHTML=(result.timings?`<p>Processing times${result.cached?' from the original run':''}: search ${(result.timings.searchMs/1000).toFixed(1)}s · read pages ${(result.timings.crawlMs/1000).toFixed(1)}s · local field checks ${result.timings.extractionMs.toFixed(1)}ms. Cached stages take no Actor time.</p>`:'')+result.runs.map(run=>`<p>${link(run.url,run.actor+' run')} · Reported usage: ${run.usageTotalUsd===null?'not available':`$${Number(run.usageTotalUsd).toFixed(4)}`} (check Console for final charges)</p>`).join('');
  persist();render();if(location.hash.startsWith('#event/')&&!$('#detail-dialog').open)openRoute();
 }
 function setDiscoveryLoading(loading,progress={},startedAt){
  searching=loading;
  $('#discover-live').disabled=loading;
- $('#discover-live').textContent=loading?'Finding opportunities…':'Find live opportunities ↗';
+ const emptySearch=$('#start-web-search');if(emptySearch){emptySearch.disabled=loading;emptySearch.textContent=loading?'Searching the web…':'Find opportunities online ↗';}
+ $('#discover-live').textContent=loading?'Finding opportunities…':'Find opportunities online ↗';
  $('#discovery-loading').hidden=!loading;
  $('#discovery-status').hidden=loading;
  $('#results').setAttribute('aria-busy',String(loading));
@@ -231,7 +250,7 @@ async function watchDiscovery(switchSource=false){
  try{
   const response=await fetch('/api/discovery');if(!response.ok)throw new Error('Unable to check discovery');const job=await response.json();
   if(job.status==='running'){setDiscoveryLoading(true,job.progress,job.startedAt);setTimeout(()=>watchDiscovery(switchSource),2000);return;}
-  const wasSearching=searching;setDiscoveryLoading(false);
+  const wasSearching=searching;setDiscoveryLoading(false);if(source==='live'&&!liveEvents.length)render();
   if(job.status==='complete')showLive(job.result,switchSource);
   if(job.status==='failed')$('#discovery-status').textContent=job.error;
   if(job.status==='idle'&&wasSearching)$('#discovery-status').textContent='Search status was lost after a server restart. Check Apify Console before starting again.';
@@ -241,8 +260,26 @@ async function watchDiscovery(switchSource=false){
  }
 }
 $('#discover-live').onclick=async()=>{
- if(searching)return;setDiscoveryLoading(true,{stage:'cache',message:'Checking for saved search results.'});
+ if(searching)return;setDiscoveryLoading(true,{stage:'cache',message:'Checking for saved search results.'});if(source==='live'&&!liveEvents.length)render();
  try{const response=await fetch('/api/discovery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({profile:{category:profile.category,baseCity:profile.baseCity,organizationType:profile.organizationType,radius:profile.radius},pilot:$('#pilot-search').checked})});const result=await response.json();if(!response.ok)throw new Error(result.error);watchDiscovery(true);}
- catch(error){setDiscoveryLoading(false);$('#discovery-status').textContent=error.message;}
+ catch(error){setDiscoveryLoading(false);if(source==='live'&&!liveEvents.length)render();$('#discovery-status').textContent=error.message;}
 };
-persist();render();openRoute();watchDiscovery();
+persist();render();
+const onboarding=startOnboarding({
+ read,
+ createProfile(id){
+  persist();profileId=id;
+  profile={...defaultProfile,name:'',description:'',interests:'',targetAudience:'',yearsOperating:'',revenue:'',locationMode:'city'};
+  delete profile.latitude;delete profile.longitude;
+  profiles[id]=profile;drafts=draftWorkspaces[id]={};plans=planWorkspaces[id]={};
+  persist();render();
+ },
+ selectProfile(id){
+  if(!Object.hasOwn(profiles,id))return false;
+  profileId=id;profile=profiles[id];drafts=draftWorkspaces[id] ||= {};plans=planWorkspaces[id] ||= {};
+  persist();render();return true;
+ },
+ editProfile:openProfile,
+ onEnter(){navigate('discover');openRoute();}
+});
+watchDiscovery();

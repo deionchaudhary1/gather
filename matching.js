@@ -33,9 +33,9 @@ export function evaluate(event, profile, on=today()) {
  let score=0;
  if(category){reasons.push(`Welcomes ${profile.category.toLowerCase()} vendors`);score+=35;}else issues.push(excluded?'Your offering category is explicitly excluded':conditional?'Your offering category has conditions; confirm eligibility':'Your offering category is not confirmed');
  if(organization===true){reasons.push(`Welcomes ${organizationType.toLowerCase()} organizations`);score+=10;}else issues.push(organization===false?'Your organization type is not listed':'Organization eligibility needs confirmation');
- if(distance===null) issues.push('Travel distance needs confirmation');
+ if(distance===null) issues.push('Location needs confirmation');
  else if(geography==='unknown') issues.push('City inferred from listing title; confirm the event location');
- else if(distance<=Number(profile.radius)){reasons.push(`About ${distance.toFixed(1)} miles away · within your radius`);score+=25;}else issues.push('Outside your travel radius');
+ else if(distance<=Number(profile.radius)){reasons.push(`Within your search area`);score+=25;}else issues.push('Outside your search area');
  if(fee===null) issues.push('Vendor fee needs confirmation');
  else if(fee<=Number(profile.budget)){reasons.push(`$${fee} published fee · within your budget`);score+=20;}else issues.push('Vendor fee exceeds your budget');
  if(event.live && !event.feeIncludesSpace && !Number.isFinite(event.spaceFee)) issues.push('Space rental or additional charges need confirmation');
@@ -56,7 +56,8 @@ export function sortEvents(events,profile,sort='recommended',on=today()) {
   if(sort==='distance')return optional(am.distance,bm.distance)||a.name.localeCompare(b.name);
   if(sort==='date' || sort==='deadline')return optional(validDate(a[sort])?a[sort]:null,validDate(b[sort])?b[sort]:null)||a.name.localeCompare(b.name);
   if(sort==='fee')return optional(totalFee(a),totalFee(b))||a.name.localeCompare(b.name);
-  return Number(bm.eligible)-Number(am.eligible)||bm.score-am.score||optional(a.date,b.date)||a.name.localeCompare(b.name);
+  const tier=m=>m.label==='Strong fit'?0:m.label==='Needs a fee check'?1:m.blocked?3:2;
+  return tier(am)-tier(bm)||optional(validDate(a.date)?a.date:null,validDate(b.date)?b.date:null)||bm.score-am.score||a.name.localeCompare(b.name);
  });
 }
 export function createDraft(event,profile) {

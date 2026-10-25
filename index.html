@@ -6,6 +6,41 @@
  <title>Gather — Find your next crowd</title><link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<section id="welcome" class="welcome" aria-label="Welcome to Gather">
+ <div id="welcome-splash" class="welcome-splash" role="status" aria-label="Welcome to Gather">
+  <div class="splash-lockup"><span class="mark" aria-hidden="true">g</span><span>gather<span class="brand-dot">.</span></span></div>
+  <p>Good things happen locally.</p>
+ </div>
+ <div id="welcome-content" class="welcome-layout" hidden>
+  <div class="welcome-story">
+   <a class="brand" href="/" aria-label="Gather home"><span class="mark">g</span>gather<span class="brand-dot">.</span></a>
+   <div class="welcome-story-copy"><span class="eyebrow">A LITTLE LOCAL. A LOT OF POSSIBILITY.</span><h1>Your people.<br>Your place.<br>Your next <em>chapter.</em></h1><p>Meet the markets, makers, and neighbors <br>who help your business grow.</p></div>
+   <div class="welcome-art" aria-hidden="true"><svg viewBox="0 0 520 260" fill="none"><circle cx="350" cy="86" r="60" fill="#D9EDB1"/><path d="M20 244Q125 160 250 238Q380 163 510 240" fill="#B3C498"/><path d="M123 239V123H338V239" fill="#FBFAF6"/><path d="M105 122L145 62H317L357 122Z" fill="#294E3B"/><path d="M129 87H333" stroke="#D9EDB1" stroke-width="16" stroke-dasharray="25 24"/><path d="M105 122H357" stroke="#294E3B" stroke-width="13"/><path d="M140 172H323V239H140Z" fill="#C38C68"/><path d="M130 173H333" stroke="#294E3B" stroke-width="8"/><path d="M173 171V148H194V171M208 171V142H229V171" fill="#D9EDB1"/><path d="M263 170V145Q281 119 299 145V170" fill="#E8BC83"/><path d="M388 240V166M389 201Q343 175 369 148Q393 143 389 201M389 185Q429 160 416 141Q391 133 389 185" stroke="#607A50" stroke-width="9" stroke-linecap="round"/><path d="M58 48L64 63L80 69L64 75L58 91L52 75L36 69L52 63Z" fill="#77965B"/></svg><span class="art-note">There’s a place for you here.</span></div>
+   <p class="welcome-footnote">Made for the people who make a neighborhood.</p>
+  </div>
+  <div class="welcome-flow">
+   <div class="welcome-topline"><span>YOUR NEXT CHAPTER STARTS HERE</span><span class="demo-pill">Cal Hacks · Demo</span></div>
+   <div class="welcome-card">
+    <div id="welcome-tabs" class="welcome-tabs" role="group" aria-label="Account options"><button type="button" data-auth-mode="signup" aria-pressed="true">Sign up</button><button type="button" data-auth-mode="login" aria-pressed="false">Log in</button></div>
+    <section id="welcome-role" class="welcome-step" aria-labelledby="role-title">
+     <span class="eyebrow">01 / YOUR NEXT OPPORTUNITY</span><h2 id="role-title" tabindex="-1">Let’s grow something <em>good.</em></h2><p>Find the right opportunities for your small business.</p>
+     <button type="button" class="role-choice" id="choose-small"><span class="role-symbol" aria-hidden="true">✳</span><span><strong>Get started</strong><small>Find your next market, pop-up, or community event.</small></span><span aria-hidden="true">↗</span></button>
+
+     <p class="welcome-local-note">A local demo of your first steps with Gather.</p>
+    </section>
+    <section id="welcome-account" class="welcome-step" hidden aria-labelledby="account-title">
+     <button type="button" id="account-back" class="welcome-back">← Back</button><span id="account-eyebrow" class="eyebrow">02 / MAKE YOURSELF AT HOME</span><h2 id="account-title" tabindex="-1">A fresh start, <em>together.</em></h2><p id="account-description">Create your account. Then we’ll get to know your business.</p>
+     <form id="account-form"><label for="account-username">Username</label><input id="account-username" name="username" autocomplete="username" minlength="3" maxlength="30" pattern="[A-Za-z0-9_-]+" title="Use 3–30 letters, numbers, underscores, or hyphens" required placeholder="Your corner of the neighborhood"><label for="account-password">Password</label><div class="password-field"><input id="account-password" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required aria-describedby="password-hint"><button type="button" id="toggle-password" aria-label="Show password">Show</button></div><small id="password-hint">Use at least 8 characters.</small><p id="account-error" class="account-error" role="alert"></p><button type="submit" class="primary welcome-primary" id="account-submit">Create account →</button></form>
+     <p class="welcome-local-note">Demo accounts stay in this browser. Use a demo password, not one you use elsewhere. This shared workspace is not a private account service.</p>
+    </section>
+    <section id="welcome-profile" class="welcome-step" hidden aria-labelledby="setup-title"><span class="eyebrow">03 / PUT YOUR BUSINESS ON THE MAP</span><h2 id="setup-title" tabindex="-1">Now, make it <em>yours.</em></h2><p>Your account is ready. Tell us a little about your business so we can help you find the right crowd.</p><div class="setup-preview"><span aria-hidden="true">✳</span><p>Your offering. Your neighborhood.<br>Your next opportunity.</p></div><button type="button" id="setup-profile" class="primary welcome-primary">Set up my profile →</button><button type="button" class="welcome-back" id="setup-signout">Back to welcome</button></section>
+
+   </div>
+   <p class="welcome-bottom">Local connections. New possibilities. Gather.</p>
+  </div>
+ </div>
+</section>
+<div id="workspace" hidden>
 <aside class="sidebar">
  <a class="brand" href="/" aria-label="Gather home"><span class="mark">g</span>gather<span class="brand-dot">.</span></a>
  <div class="workspace">YOUR WORKSPACE</div>
@@ -15,6 +50,7 @@
   <button class="nav" data-view="drafts" aria-label="Inquiry drafts"><span aria-hidden="true">▤</span><span class="nav-label">Inquiry drafts</span><b id="draft-count">0</b></button>
  </nav>
  <div class="sidebar-note"><span class="little-star">✳</span><h3>Small organization.<br>Big possibilities.</h3><p>A space for businesses, nonprofits, and the communities they build.</p></div>
+ <div class="welcome-tools"><button type="button" id="replay-welcome">↻ Replay welcome</button><button type="button" id="sign-out">Log out</button></div>
  <button id="profile-button" class="business"><span class="avatar" aria-hidden="true">D</span><span><strong id="business-name">Daybreak Coffee</strong><small>Edit organization profile ↗</small></span></button>
 </aside>
 <main>
@@ -23,29 +59,30 @@
  <section class="profile-switcher" aria-label="Business profiles"><div><label for="profile-switch">Viewing business</label><select id="profile-switch"></select></div><span class="profile-disclosure">Business profiles · editable locally</span><button class="secondary" id="compare-profiles">Compare all three ↗</button></section>
  <section class="brief" aria-label="Your opportunity brief"><div class="brief-icon">✳</div><div><strong>Your organization, in good company.</strong><p id="brief-summary"></p></div><button class="text-button" id="edit-brief">Edit your brief ↗</button></section>
  <section id="discovery-panel" class="discovery-panel" aria-label="Event sources">
-  <div class="source-row"><label for="event-source">Explore</label><select id="event-source"><option value="samples">Vendor applications</option><option value="live">Live public listings</option></select><span class="muted" id="source-summary"></span></div>
+  <div class="source-row"><label for="event-source">Explore</label><select id="event-source"><option value="samples">Demo opportunities</option><option value="live">Web-discovered opportunities</option></select><span class="muted" id="source-summary"></span></div>
   <div id="discovery-loading" class="discovery-loading" hidden>
    <div class="loading-heading"><span class="discovery-spinner" aria-hidden="true"></span><div><strong>Finding your next opportunity</strong><p id="loading-message" role="status" aria-live="polite">Checking for saved search results.</p></div><span id="discovery-elapsed" class="loading-elapsed" aria-hidden="true">0:00 elapsed</span></div>
    <ol class="discovery-steps" aria-label="Discovery progress"><li data-progress-step="search"><span class="step-indicator" aria-hidden="true">1</span>Search the web</li><li data-progress-step="crawl"><span class="step-indicator" aria-hidden="true">2</span>Read source pages</li><li data-progress-step="extract"><span class="step-indicator" aria-hidden="true">3</span>Check event details</li></ol>
    <p class="loading-hint">Public sources can take a few minutes to respond. You can keep browsing while we look.</p>
   </div>
-  <details id="live-controls"><summary>Find more public listings</summary><div class="discovery-body"><div><p>Apify searches your selected home city and offering, shortlists five URLs, and reads up to ten pages. Uses Apify credits; searches are cached for 24 hours.</p><label class="check"><input id="pilot-search" type="checkbox"> Use the original Bay Area holiday pilot searches</label><p id="discovery-status" role="status">Search runs only when you choose Find live opportunities.</p><details><summary>Run details and usage</summary><div id="discovery-runs"></div></details></div><button class="secondary" id="discover-live">Find live opportunities ↗</button></div></details>
+  <details id="live-controls"><summary>Search the web for opportunities</summary><div class="discovery-body"><div><p>Apify searches your selected home city and offering, shortlists five URLs, and reads up to ten pages. Uses Apify credits; searches are cached for 24 hours.</p><label class="check"><input id="pilot-search" type="checkbox"> Use the original Bay Area holiday pilot searches</label><p id="discovery-status" role="status">Search starts when you choose Find opportunities online. Selecting this view alone does not run a search.</p><details><summary>Run details and usage</summary><div id="discovery-runs"></div></details></div><button class="secondary" id="discover-live">Find opportunities online ↗</button></div></details>
  </section>
  <section class="browse-controls" aria-label="Opportunity filters">
   <div class="toolbar"><div class="tabs" aria-label="Event categories"><button class="tab active" data-type="All" aria-pressed="true">All events</button><button class="tab" data-type="Market" aria-pressed="false">Markets</button><button class="tab" data-type="Pop-up" aria-pressed="false">Pop-ups</button><button class="tab" data-type="Festival" aria-pressed="false">Festivals</button><button class="tab" data-type="Community" aria-pressed="false">Community</button></div><label class="search"><span aria-hidden="true">⌕</span><input id="search" aria-label="Search events, cities, or interests" placeholder="Search events, cities, interests"></label></div>
-  <div class="filter-row"><label>Travel radius <select id="radius-filter"><option value="5">5 miles</option><option value="10">10 miles</option><option value="25">25 miles</option><option value="30">30 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="500">500 miles</option></select></label><label>Sort by <select id="sort-order"><option value="recommended">Compatibility</option><option value="distance">Nearest first</option><option value="date">Event date</option><option value="deadline">Application deadline</option><option value="fee">Lowest published fee</option></select></label><label class="check"><input id="fits-only" type="checkbox"> Within my brief</label><label class="check"><input id="include-unknown-location" type="checkbox"> Include unverified locations</label><label class="check"><input id="hide-ended" type="checkbox" checked> Hide past and closed</label></div>
+  <div class="filter-row"><label>Search area <select id="radius-filter"><option value="5">5 miles</option><option value="10">10 miles</option><option value="25">25 miles</option><option value="30">30 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="500">500 miles</option></select></label><label>Sort by <select id="sort-order"><option value="recommended">Best fit · soonest first</option><option value="distance">Nearest area first</option><option value="date">Event date</option><option value="deadline">Application deadline</option><option value="fee">Lowest published fee</option></select></label><label class="check"><input id="fits-only" type="checkbox"> Within my brief</label><label class="check"><input id="include-unknown-location" type="checkbox"> Include unverified locations</label><label class="check"><input id="hide-ended" type="checkbox" checked> Hide past and closed</label></div>
  </section>
  <div class="results-header"><h2 id="results-heading">Opportunities for you</h2><div id="saved-controls" hidden><div class="segmented" role="group" aria-label="Saved event view"><button data-layout="list" aria-pressed="true">List</button><button data-layout="calendar" aria-pressed="false">Calendar</button></div><button id="export-calendar" class="text-button">Export calendar ↧</button></div></div>
  <p class="transparency"></p><p id="geography-summary" class="muted" role="status"></p><section id="results" class="grid" aria-live="polite"></section><section id="comparison-panel" hidden aria-label="Business compatibility comparison"></section>
  <section id="calendar-panel" hidden aria-label="Saved events calendar"><div class="calendar-nav"><button class="secondary" id="previous-month" aria-label="Previous month">←</button><label>Month <input id="calendar-month" type="month" min="2000-01" max="2100-12"></label><button class="secondary" id="next-month" aria-label="Next month">→</button></div><p class="muted">Event dates and application deadlines from your saved list. Unknown dates stay in the undated list.</p><div class="calendar-scroll" id="calendar-content"></div><div id="undated-events"></div></section>
  <footer>Made for the organizations that make a neighborhood. <span>Gather · Local workspace</span></footer>
 </main>
+</div>
 <dialog id="profile-dialog" aria-labelledby="profile-title"><form id="profile-form">
  <div class="dialog-head"><div><span class="eyebrow">MAKE IT YOURS</span><h2 id="profile-title">Your organization profile</h2></div><button type="button" class="icon-button close" aria-label="Close profile">×</button></div>
  <label>Organization name<input name="name" required maxlength="80"></label>
  <div class="form-row"><label>Organization type<select name="organizationType"><option>Small business</option><option>Nonprofit</option><option>Club</option></select></label><label>What do you offer?<select name="category"><option>Coffee & beverages</option><option>Food & bakery</option><option>Art & handmade</option><option>Retail & gifts</option><option>Wellness & services</option><option>Community & advocacy</option></select></label></div>
- <fieldset><legend>Where you start</legend><label>Home city<select name="baseCity" id="base-city"></select></label><button type="button" class="secondary" id="use-location">Use my current location</button><button type="button" class="text-button" id="use-city">Use selected city instead</button><p id="location-status" class="muted" role="status"></p><p class="muted">Distances are approximate straight-line miles from city centers, unless event coordinates are published. Your device location stays in this browser.</p></fieldset>
- <div class="form-row"><label>Travel radius (miles)<input name="radius" type="number" min="0" max="500" required></label><label>Maximum event fee ($)<input name="budget" type="number" min="0" max="10000" required></label></div>
+ <fieldset><legend>Where you start</legend><label>Home city<select name="baseCity" id="base-city"></select></label><button type="button" class="secondary" id="use-location">Use my current location</button><button type="button" class="text-button" id="use-city">Use selected city instead</button><p id="location-status" class="muted" role="status"></p><p class="muted">Search area filters by geographic proximity, not driving distance. Use Google Maps directions on each opportunity for driving mileage and travel time. Your device location stays in this browser.</p></fieldset>
+ <div class="form-row"><label>Search area radius (miles)<input name="radius" type="number" min="0" max="500" required></label><label>Maximum event fee ($)<input name="budget" type="number" min="0" max="10000" required></label></div>
  <label>What you do<textarea name="description" maxlength="600" rows="3" required></textarea></label>
  <label>Interests and goals<input name="interests" maxlength="300" aria-describedby="interests-help"></label><p id="interests-help" class="muted">For example: handmade gifts, family activities, sustainability, community education.</p>
  <label>Who do you want to reach?<input name="targetAudience" maxlength="300"></label>

@@ -6,15 +6,16 @@ export const approvedProfiles = [
  {id:'refill',...base,name:'Loop & Leaf Refill',category:'Retail & gifts',baseCity:'San Francisco',radius:25,budget:150,description:'A sustainable household goods shop offering refillable cleaning products and reusable everyday essentials.',interests:'sustainability, zero waste, reusable products, community events',targetAudience:'Eco-conscious shoppers and sustainability-minded neighbors'},
 ];
 const object=value=>value && typeof value==='object' && !Array.isArray(value);
+export const isRemovedDemoProfile = profile => ['test','2345678'].includes(String(profile?.name || '').trim().toLowerCase());
 export function initializeProfiles(storedProfiles,legacyProfile,storedActive){
  const profiles=Object.fromEntries(approvedProfiles.map(({id,...profile})=>[id,{...profile}]));
  const existing=object(storedProfiles)&&Object.keys(storedProfiles).length>0;
- if(existing){for(const [id,value] of Object.entries(storedProfiles)){if(/^[a-z0-9-]+$/.test(id)&&object(value)&&typeof value.name==='string')profiles[id]={...defaultProfile,...value};}}
+ if(existing){for(const [id,value] of Object.entries(storedProfiles)){if(/^[a-z0-9-]+$/.test(id)&&object(value)&&typeof value.name==='string'&&!isRemovedDemoProfile(value))profiles[id]={...defaultProfile,...value};}}
  let active=Object.hasOwn(profiles,storedActive)?storedActive:'daybreak';
  if(!existing&&object(legacyProfile)&&Object.keys(legacyProfile).length){
   const comparable=Object.keys(defaultProfile);
   const customized=comparable.some(key=>(legacyProfile[key]??defaultProfile[key])!==defaultProfile[key]);
-  if(customized){profiles.previous={...defaultProfile,...legacyProfile};active='previous';}
+  if(customized&&!isRemovedDemoProfile(legacyProfile)){profiles.previous={...defaultProfile,...legacyProfile};active='previous';}
  }
  return {profiles,active};
 }
