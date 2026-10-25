@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {events,defaultProfile} from '../data.js';import {evaluate,createDraft} from '../matching.js';
+test('matching excludes closed applications, mismatched categories and over-budget fees',()=>{assert.equal(evaluate(events.find(e=>e.id==='harvest'),defaultProfile,'2026-10-24').eligible,true);for(const id of ['autumn','design'])assert.equal(evaluate(events.find(e=>e.id===id),defaultProfile,'2026-10-24').eligible,false)});
+test('unknown fees remain uncertain rather than being treated as free',()=>{const result=evaluate(events.find(e=>e.id==='wellness'),defaultProfile,'2026-10-24');assert.equal(result.label,'Needs a fee check');assert.ok(result.issues.includes('Vendor fee needs confirmation'))});
+test('changing radius and budget changes qualification',()=>{assert.equal(evaluate(events[0],{...defaultProfile,radius:1}).eligible,false);assert.equal(evaluate(events[0],{...defaultProfile,budget:20}).eligible,false)});
+test('inquiry uses the business profile and asks about unknown fees',()=>{const text=createDraft(events.find(e=>e.id==='wellness'),{...defaultProfile,name:'Test Coffee'});assert.ok(text.includes('Test Coffee'));assert.ok(text.includes('the vendor fee'));assert.ok(!text.includes('approved'))});
