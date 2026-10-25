@@ -1,6 +1,6 @@
 # Gather
 
-Find markets, festivals, and community events for small businesses, nonprofits, and clubs. Gather includes a local vendor application catalog and separate public listings from Apify.
+Find markets, festivals, and community events for small businesses, nonprofits, and clubs to expand business exposure and reach. Gather includes a local vendor application catalog and separate public listings from Apify.
 
 ## Run
 
